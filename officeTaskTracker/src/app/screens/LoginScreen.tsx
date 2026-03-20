@@ -11,7 +11,7 @@ export function LoginScreen() {
         <div className="w-16 h-16 rounded-2xl bg-gray-900 flex items-center justify-center mb-3 shadow-lg">
           <CheckSquare size={32} color="white" />
         </div>
-        <h1 className="text-xl font-bold text-gray-900">TaskManager</h1>
+        <h1 className="text-xl font-bold text-gray-900">officeTaskTracker</h1>
         <p className="text-xs text-gray-500 mt-1">Sign in to your account</p>
       </div>
 

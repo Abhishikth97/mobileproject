@@ -106,7 +106,7 @@ export function SettingsMenuScreen() {
         </button>
 
         {/* App Version */}
-        <p className="text-[10px] text-gray-400 text-center">Version 1.0.0 · TaskManager</p>
+        <p className="text-[10px] text-gray-400 text-center">Version 1.0.0 · officeTaskTracker</p>
 
         {/* Annotation */}
         <div className="border border-dashed border-blue-300 rounded-lg p-1.5 bg-blue-50">

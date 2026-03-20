@@ -12,7 +12,7 @@ export function SignUpScreen() {
           <CheckSquare size={28} color="white" />
         </div>
         <h1 className="text-xl font-bold text-gray-900">Create Account</h1>
-        <p className="text-xs text-gray-500 mt-1">Join TaskManager today</p>
+        <p className="text-xs text-gray-500 mt-1">Join officeTaskTracker today</p>
       </div>
 
       {/* Form */}

@@ -54,7 +54,7 @@ const notifications = [
     iconColor: "text-gray-500",
     bg: "bg-gray-50",
     title: "App Update",
-    sub: "TaskManager v1.1.0 is available for download",
+    sub: "officeTaskTracker v1.1.0 is available for download",
     time: "1d ago",
     unread: false,
   },

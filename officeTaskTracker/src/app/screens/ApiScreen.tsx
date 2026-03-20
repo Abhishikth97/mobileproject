@@ -62,7 +62,7 @@ export function ApiScreen() {
             </div>
             <div className="flex items-center gap-1">
               <Wifi size={12} className="text-gray-400" />
-              <span className="text-[10px] text-gray-400">api.taskmanager.io</span>
+              <span className="text-[10px] text-gray-400">api.officetasktracker.io</span>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">

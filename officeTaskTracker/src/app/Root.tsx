@@ -40,7 +40,7 @@ export function Root() {
               <CheckSquare size={16} color="white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900">TaskManager</p>
+              <p className="text-sm font-bold text-gray-900">officeTaskTracker</p>
               <p className="text-[10px] text-gray-400">Wireframe Preview</p>
             </div>
           </div>
