@@ -1,122 +1,134 @@
-import { useNavigate } from "react-router";
-import { WireframeAvatar } from "../components/WireframeBox";
-import { BottomNav } from "../components/BottomNav";
-import {
-  User,
-  Bell,
-  Sliders,
-  ChevronRight,
-  Shield,
-  HelpCircle,
-  LogOut,
-  Star,
-  Menu,
-} from "lucide-react";
-
-const menuGroups = [
-  {
-    title: "Account",
-    items: [
-      { icon: User, label: "Profile", sub: "Edit your personal info", path: "/favorites" },
-      { icon: Bell, label: "Notifications", sub: "Alerts & reminders", path: "/notifications" },
-      { icon: Sliders, label: "App Preferences", sub: "Theme, language & more", path: "/settings" },
-    ],
-  },
-  {
-    title: "More",
-    items: [
-      { icon: Shield, label: "Privacy & Security", sub: "Manage permissions", path: "/settings" },
-      { icon: HelpCircle, label: "Help & Support", sub: "FAQs, contact us", path: "/settings" },
-      { icon: Star, label: "Rate the App", sub: "Leave us a review", path: "/settings" },
-    ],
-  },
-];
+import { useNavigate } from 'react-router';
+import { ChevronRight, User, Bell, Sliders, Zap, LogOut, Menu, CheckSquare } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 export function SettingsMenuScreen() {
   const navigate = useNavigate();
-  return (
-    <div className="flex-1 flex flex-col">
-      {/* Header */}
-      <div className="px-5 pt-4 pb-3 border-b border-gray-100">
-        <div className="flex items-center gap-2 mb-1">
-          <Menu size={16} className="text-gray-700" />
-          <h2 className="text-sm font-bold text-gray-900">Settings Menu</h2>
-        </div>
-        <p className="text-[11px] text-gray-400">Manage your app settings</p>
-      </div>
+  const { logout, user } = useApp();
 
-      {/* Profile Summary */}
-      <div className="mx-5 mt-4 bg-gray-900 rounded-2xl p-4 flex items-center gap-3">
-        <WireframeAvatar size={44} />
-        <div className="flex-1">
-          <p className="text-sm font-bold text-white">Alex Johnson</p>
-          <p className="text-[10px] text-gray-400">alex@example.com</p>
-          <div className="mt-1 flex items-center gap-1">
-            <div className="h-1.5 w-16 bg-gray-700 rounded-full overflow-hidden">
-              <div className="h-full w-3/5 bg-green-400 rounded-full" />
-            </div>
-            <span className="text-[9px] text-gray-500">Pro Plan</span>
+  const menuGroups = [
+    {
+      title: 'Account',
+      items: [
+        {
+          icon: User,
+          label: 'Profile',
+          desc: 'Manage your personal info',
+          path: '/profile',
+          color: 'bg-blue-100 text-blue-600',
+        },
+        {
+          icon: Bell,
+          label: 'Notifications',
+          desc: 'Alerts and reminders',
+          path: '/notifications',
+          color: 'bg-purple-100 text-purple-600',
+        },
+      ],
+    },
+    {
+      title: 'App',
+      items: [
+        {
+          icon: Sliders,
+          label: 'App Preferences',
+          desc: 'Dark mode, language & more',
+          path: '/settings/preferences',
+          color: 'bg-green-100 text-green-600',
+        },
+        {
+          icon: Zap,
+          label: 'API Integration',
+          desc: 'Real-time task sync',
+          path: '/api',
+          color: 'bg-amber-100 text-amber-600',
+        },
+      ],
+    },
+  ];
+
+  return (
+    <div className="flex flex-col min-h-full bg-[#F5F6FA]">
+      {/* Header */}
+      <div className="bg-[#1B2235] px-5 pt-12 pb-8">
+        {/* Top row: menu icon + title */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+            <Menu size={22} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-white font-bold text-xl">Settings</h1>
+            <p className="text-[#9BA8BD] text-xs">Manage your account &amp; app</p>
           </div>
         </div>
-        <button
-          onClick={() => navigate("/favorites")}
-          className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center"
-        >
-          <ChevronRight size={14} color="white" />
-        </button>
+
+        {/* User card */}
+        <div className="bg-white/10 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <User size={20} className="text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-semibold text-sm">{user.username}</p>
+            <p className="text-[#9BA8BD] text-xs">{user.email}</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <CheckSquare size={13} className="text-amber-400" />
+            <span className="text-amber-400 text-xs font-medium">{user.isPro ? 'Pro' : 'Free'}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Menu Groups */}
-      <div className="flex-1 px-5 py-4 flex flex-col gap-5 overflow-y-auto">
-        {menuGroups.map((group) => (
+      <div className="flex-1 px-5 py-5 space-y-5">
+        {menuGroups.map(group => (
           <div key={group.title}>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
               {group.title}
             </p>
-            <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden">
-              {group.items.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.label}
-                    onClick={() => navigate(item.path)}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-gray-50 transition-colors ${
-                      idx < group.items.length - 1 ? "border-b border-gray-100" : ""
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <Icon size={15} className="text-gray-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-gray-800">{item.label}</p>
-                      <p className="text-[10px] text-gray-400">{item.sub}</p>
-                    </div>
-                    <ChevronRight size={13} className="text-gray-300" />
-                  </button>
-                );
-              })}
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+              {group.items.map(({ icon: Icon, label, desc, path, color }, i) => (
+                <button
+                  key={label}
+                  onClick={() => navigate(path)}
+                  className={`w-full flex items-center gap-4 px-4 py-4 hover:bg-gray-50 transition ${i < group.items.length - 1 ? 'border-b border-gray-50' : ''}`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+                    <Icon size={20} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-gray-800">{label}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-300" />
+                </button>
+              ))}
             </div>
           </div>
         ))}
 
         {/* Logout */}
-        <button className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-red-200 bg-red-50 text-xs font-semibold text-red-600 active:scale-95">
-          <LogOut size={14} />
-          Log Out
-        </button>
-
-        {/* App Version */}
-        <p className="text-[10px] text-gray-400 text-center">Version 1.0.0 · officeTaskTracker</p>
-
-        {/* Annotation */}
-        <div className="border border-dashed border-blue-300 rounded-lg p-1.5 bg-blue-50">
-          <p className="text-[10px] text-blue-500 text-center font-medium">
-            ⑥ Settings Menu — Navigation Hub
-          </p>
+        <div>
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+            <button
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              className="w-full flex items-center gap-4 px-4 py-4 hover:bg-red-50 transition"
+            >
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                <LogOut size={20} className="text-red-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold text-red-500">Log Out</p>
+                <p className="text-xs text-gray-400 mt-0.5">Sign out of your account</p>
+              </div>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <BottomNav />
+        {/* App version */}
+        <p className="text-center text-xs text-gray-400">officeTaskTracker v1.0.0</p>
+      </div>
     </div>
   );
 }

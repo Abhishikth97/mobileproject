@@ -1,33 +1,59 @@
-import { createBrowserRouter, redirect } from "react-router";
-import { Root } from "./Root";
-import { LoginScreen } from "./screens/LoginScreen";
-import { SignUpScreen } from "./screens/SignUpScreen";
-import { HomeScreen } from "./screens/HomeScreen";
-import { DetailScreen } from "./screens/DetailScreen";
-import { FavoritesScreen } from "./screens/FavoritesScreen";
-import { SettingsMenuScreen } from "./screens/SettingsMenuScreen";
-import { SettingsScreen } from "./screens/SettingsScreen";
-import { NotificationsScreen } from "./screens/NotificationsScreen";
-import { ApiScreen } from "./screens/ApiScreen";
+import { createBrowserRouter, redirect } from 'react-router';
+import { MobileLayout } from './components/MobileLayout';
+import { LoginScreen } from './screens/LoginScreen';
+import { SignUpScreen } from './screens/SignUpScreen';
+import { HomeScreen } from './screens/HomeScreen';
+import { TaskDetailScreen } from './screens/TaskDetailScreen';
+import { ProfileScreen } from './screens/ProfileScreen';
+import { SettingsMenuScreen } from './screens/SettingsMenuScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
+import { NotificationsScreen } from './screens/NotificationsScreen';
+import { ApiIntegrationScreen } from './screens/ApiIntegrationScreen';
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    Component: Root,
+    index: true,
+    loader: () => redirect('/login'),
+  },
+  {
+    path: '/login',
+    Component: LoginScreen,
+  },
+  {
+    path: '/signup',
+    Component: SignUpScreen,
+  },
+  {
+    Component: MobileLayout,
     children: [
       {
-        index: true,
-        loader: () => redirect("/login"),
+        path: '/home',
+        Component: HomeScreen,
       },
-      { path: "login", Component: LoginScreen },
-      { path: "signup", Component: SignUpScreen },
-      { path: "home", Component: HomeScreen },
-      { path: "detail", Component: DetailScreen },
-      { path: "favorites", Component: FavoritesScreen },
-      { path: "settings-menu", Component: SettingsMenuScreen },
-      { path: "settings", Component: SettingsScreen },
-      { path: "notifications", Component: NotificationsScreen },
-      { path: "api", Component: ApiScreen },
+      {
+        path: '/task/:id',
+        Component: TaskDetailScreen,
+      },
+      {
+        path: '/profile',
+        Component: ProfileScreen,
+      },
+      {
+        path: '/settings',
+        Component: SettingsMenuScreen,
+      },
+      {
+        path: '/settings/preferences',
+        Component: SettingsScreen,
+      },
+      {
+        path: '/notifications',
+        Component: NotificationsScreen,
+      },
+      {
+        path: '/api',
+        Component: ApiIntegrationScreen,
+      },
     ],
   },
 ]);

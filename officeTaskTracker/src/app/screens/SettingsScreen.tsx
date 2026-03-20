@@ -1,141 +1,132 @@
-import { useNavigate } from "react-router";
-import { ArrowLeft, Moon, Bell, Globe, Lock, Trash2, Download, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useNavigate } from 'react-router';
+import { ArrowLeft, Moon, Bell, Mail, Globe, Lock, Download, RefreshCw, Trash2, ChevronRight } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <button
       onClick={onToggle}
-      className={`w-10 h-5.5 rounded-full relative transition-colors flex-shrink-0 ${
-        on ? "bg-gray-900" : "bg-gray-300"
-      }`}
-      style={{ height: "22px", width: "40px" }}
+      className={`relative w-11 h-6 rounded-full transition-colors ${on ? 'bg-[#1B2235]' : 'bg-gray-200'}`}
     >
       <span
-        className={`absolute top-0.5 w-4.5 h-4.5 rounded-full bg-white shadow transition-all`}
-        style={{
-          width: "18px",
-          height: "18px",
-          left: on ? "20px" : "2px",
-          transition: "left 0.2s",
-        }}
+        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${on ? 'left-5' : 'left-0.5'}`}
       />
     </button>
   );
 }
 
-const toggleSettings = [
-  { key: "darkMode", icon: Moon, label: "Dark Mode", sub: "Switch to dark theme" },
-  { key: "pushNotifs", icon: Bell, label: "Push Notifications", sub: "Get task reminders" },
-  { key: "emailNotifs", icon: Bell, label: "Email Notifications", sub: "Receive email alerts" },
-  { key: "language", icon: Globe, label: "Auto Language", sub: "Detect system language" },
-];
-
 export function SettingsScreen() {
   const navigate = useNavigate();
-  const [toggles, setToggles] = useState<Record<string, boolean>>({
-    darkMode: false,
-    pushNotifs: true,
-    emailNotifs: false,
-    language: true,
-  });
+  const { settings, updateSettings } = useApp();
 
-  const flipToggle = (key: string) =>
-    setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
+  const preferences = [
+    {
+      icon: Moon,
+      label: 'Dark Mode',
+      desc: 'Switch to dark theme',
+      key: 'darkMode' as const,
+    },
+    {
+      icon: Bell,
+      label: 'Push Notifications',
+      desc: 'Get task reminders',
+      key: 'pushNotifications' as const,
+    },
+    {
+      icon: Mail,
+      label: 'Email Notifications',
+      desc: 'Receive email alerts',
+      key: 'emailNotifications' as const,
+    },
+    {
+      icon: Globe,
+      label: 'Auto Language',
+      desc: 'Detect system language',
+      key: 'autoLanguage' as const,
+    },
+  ];
+
+  const accountItems = [
+    { icon: Lock, label: 'Change Password', desc: 'Update credentials' },
+    { icon: Download, label: 'Export Data', desc: 'Download your tasks' },
+    { icon: RefreshCw, label: 'Sync Settings', desc: 'Sync across devices' },
+  ];
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex flex-col min-h-full bg-[#F5F6FA]">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-100">
+      <div className="bg-white px-5 pt-12 pb-4 flex items-center gap-3 border-b border-gray-100">
         <button
-          onClick={() => navigate(-1)}
-          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+          onClick={() => navigate('/settings')}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100"
         >
-          <ArrowLeft size={16} className="text-gray-700" />
+          <ArrowLeft size={18} className="text-gray-600" />
         </button>
-        <h2 className="text-sm font-bold text-gray-900">Settings</h2>
+        <h1 className="text-base font-semibold text-[#1B2235]">Settings</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
-        {/* Toggles Group */}
+      <div className="flex-1 px-5 py-5 space-y-5">
+        {/* Preferences */}
         <div>
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Preferences
-          </p>
-          <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden">
-            {toggleSettings.map(({ key, icon: Icon, label, sub }, idx) => (
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Preferences</p>
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+            {preferences.map(({ icon: Icon, label, desc, key }, i) => (
               <div
                 key={key}
-                className={`flex items-center gap-3 px-4 py-3.5 ${
-                  idx < toggleSettings.length - 1 ? "border-b border-gray-100" : ""
-                }`}
+                className={`flex items-center gap-4 px-4 py-4 ${i < preferences.length - 1 ? 'border-b border-gray-50' : ''}`}
               >
-                <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <Icon size={14} className="text-gray-600" />
+                <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <Icon size={17} className="text-gray-500" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-gray-800">{label}</p>
-                  <p className="text-[10px] text-gray-400">{sub}</p>
+                  <p className="text-sm font-medium text-gray-800">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
                 </div>
-                <Toggle on={toggles[key]} onToggle={() => flipToggle(key)} />
+                <Toggle
+                  on={settings[key]}
+                  onToggle={() => updateSettings({ [key]: !settings[key] })}
+                />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Account Info */}
+        {/* Account */}
         <div>
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Account
-          </p>
-          <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden">
-            {[
-              { icon: Lock, label: "Change Password", sub: "Update credentials" },
-              { icon: Download, label: "Export Data", sub: "Download your tasks" },
-              { icon: RefreshCw, label: "Sync Settings", sub: "Sync across devices" },
-            ].map(({ icon: Icon, label, sub }, idx, arr) => (
-              <div
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Account</p>
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+            {accountItems.map(({ icon: Icon, label, desc }, i) => (
+              <button
                 key={label}
-                className={`flex items-center gap-3 px-4 py-3.5 ${
-                  idx < arr.length - 1 ? "border-b border-gray-100" : ""
-                }`}
+                className={`w-full flex items-center gap-4 px-4 py-4 hover:bg-gray-50 transition ${i < accountItems.length - 1 ? 'border-b border-gray-50' : ''}`}
               >
-                <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <Icon size={14} className="text-gray-600" />
+                <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <Icon size={17} className="text-gray-500" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-gray-800">{label}</p>
-                  <p className="text-[10px] text-gray-400">{sub}</p>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-gray-800">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
                 </div>
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-              </div>
+                <ChevronRight size={16} className="text-gray-300" />
+              </button>
             ))}
           </div>
         </div>
 
         {/* Danger Zone */}
         <div>
-          <p className="text-[11px] font-bold text-red-400 uppercase tracking-wider mb-2">
-            Danger Zone
-          </p>
-          <div className="bg-red-50 border-2 border-red-200 rounded-2xl overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3.5">
-              <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                <Trash2 size={14} className="text-red-500" />
+          <p className="text-[10px] font-semibold text-red-400 uppercase tracking-widest mb-3">Danger Zone</p>
+          <div className="bg-red-50 rounded-2xl overflow-hidden border border-red-100">
+            <button className="w-full flex items-center gap-4 px-4 py-4 hover:bg-red-100 transition">
+              <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                <Trash2 size={17} className="text-red-500" />
               </div>
-              <div className="flex-1">
-                <p className="text-xs font-semibold text-red-700">Delete Account</p>
-                <p className="text-[10px] text-red-400">Permanently remove all data</p>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold text-red-600">Delete Account</p>
+                <p className="text-xs text-red-400 mt-0.5">Permanently remove all data</p>
               </div>
-            </div>
+            </button>
           </div>
-        </div>
-
-        {/* Annotation */}
-        <div className="border border-dashed border-blue-300 rounded-lg p-2 bg-blue-50">
-          <p className="text-[10px] text-blue-500 text-center font-medium">
-            ⑦ Settings Screen — Toggles & Preferences
-          </p>
         </div>
       </div>
     </div>

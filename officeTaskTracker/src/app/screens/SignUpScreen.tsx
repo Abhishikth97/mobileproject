@@ -1,227 +1,299 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
-import { WireframeButton, SectionDivider } from "../components/WireframeBox";
-import { User, Mail, Lock, CheckSquare, AlertCircle } from "lucide-react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { User, Mail, Lock, CheckSquare, AlertCircle, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+interface FieldErrors {
+  username: string;
+  email: string;
+  password: string;
+  confirm: string;
+  terms: string;
+}
+
+function PasswordStrength({ password }: { password: string }) {
+  if (!password) return null;
+  const len    = password.length >= 8;
+  const upper  = /[A-Z]/.test(password);
+  const number = /[0-9]/.test(password);
+  const score  = [len, upper, number].filter(Boolean).length;
+  const labels = ['', 'Weak', 'Fair', 'Strong'];
+  const colors = ['', 'bg-red-400', 'bg-amber-400', 'bg-green-500'];
+  return (
+    <div className="mt-1.5">
+      <div className="flex gap-1 mb-1">
+        {[1, 2, 3].map(i => (
+          <div key={i} className={`flex-1 h-1 rounded-full transition-colors ${i <= score ? colors[score] : 'bg-gray-200'}`} />
+        ))}
+      </div>
+      <p className={`text-[10px] font-medium ${score === 1 ? 'text-red-500' : score === 2 ? 'text-amber-500' : 'text-green-600'}`}>
+        {labels[score]}
+      </p>
+    </div>
+  );
+}
 
 export function SignUpScreen() {
   const navigate = useNavigate();
+  const { signup } = useApp();
 
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
+  const [showPass, setShowPass]     = useState(false);
+  const [showConf, setShowConf]     = useState(false);
+  const [agreed, setAgreed]         = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [globalError, setGlobalError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({
+    username: '', email: '', password: '', confirm: '', terms: '',
+  });
 
-  const errors: Record<string, string> = {};
-  if (submitted) {
-    if (!username.trim()) errors.username = "Username is required.";
-    if (!email.trim()) {
-      errors.email = "Email address is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = "Enter a valid email address.";
+  const validateField = (name: keyof typeof form, value: string): string => {
+    switch (name) {
+      case 'username':
+        if (!value.trim()) return 'Username is required.';
+        if (value.trim().length < 3) return 'Username must be at least 3 characters.';
+        if (/\s/.test(value.trim())) return 'Username cannot contain spaces.';
+        return '';
+      case 'email':
+        if (!value.trim()) return 'Email is required.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Enter a valid email address.';
+        return '';
+      case 'password':
+        if (!value) return 'Password is required.';
+        if (value.length < 6) return 'Password must be at least 6 characters.';
+        return '';
+      case 'confirm':
+        if (!value) return 'Please confirm your password.';
+        if (value !== form.password) return 'Passwords do not match.';
+        return '';
+      default:
+        return '';
     }
-    if (!password) {
-      errors.password = "Password is required.";
-    } else if (password.length < 8) {
-      errors.password = "Password must be at least 8 characters.";
-    }
-    if (!confirmPassword) {
-      errors.confirmPassword = "Please confirm your password.";
-    } else if (password && confirmPassword !== password) {
-      errors.confirmPassword = "Passwords do not match.";
-    }
-    if (!agreed) errors.terms = "You must accept the Terms & Privacy Policy.";
-  }
-
-  const hasErrors = submitted && Object.keys(errors).length > 0;
-
-  const handleSubmit = () => {
-    setSubmitted(true);
-    const errs: Record<string, string> = {};
-    if (!username.trim()) errs.username = "x";
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "x";
-    if (!password || password.length < 8) errs.password = "x";
-    if (!confirmPassword || confirmPassword !== password) errs.confirmPassword = "x";
-    if (!agreed) errs.terms = "x";
-    if (Object.keys(errs).length === 0) navigate("/home");
   };
 
-  const fieldClass = (key: string) =>
-    `border-2 rounded-xl px-4 py-3 flex items-center gap-3 ${
-      submitted && errors[key]
-        ? "border-red-400 bg-red-50"
-        : "border-gray-300 bg-gray-50"
-    }`;
+  const handleChange = (name: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setForm(prev => ({ ...prev, [name]: val }));
+    setGlobalError('');
+    // Clear field error on type
+    setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    // Re-validate confirm when password changes
+    if (name === 'password' && form.confirm) {
+      setFieldErrors(prev => ({
+        ...prev,
+        confirm: val !== form.confirm ? 'Passwords do not match.' : '',
+      }));
+    }
+  };
+
+  const handleBlur = (name: keyof typeof form) => () => {
+    setFieldErrors(prev => ({ ...prev, [name]: validateField(name, form[name]) }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const usernameErr = validateField('username', form.username);
+    const emailErr    = validateField('email', form.email);
+    const passwordErr = validateField('password', form.password);
+    const confirmErr  = validateField('confirm', form.confirm);
+    const termsErr    = agreed ? '' : 'You must agree to the Terms & Privacy Policy.';
+
+    setFieldErrors({ username: usernameErr, email: emailErr, password: passwordErr, confirm: confirmErr, terms: termsErr });
+
+    if (usernameErr || emailErr || passwordErr || confirmErr || termsErr) return;
+
+    setLoading(true);
+    setTimeout(() => {
+      const err = signup(form.username, form.email, form.password, form.confirm);
+      setLoading(false);
+      if (err) {
+        setGlobalError(err);
+      } else {
+        navigate('/home');
+      }
+    }, 600);
+  };
+
+  const InputField = ({
+    name, icon: Icon, label, type, placeholder, showToggle, show, onToggle,
+  }: {
+    name: keyof typeof form;
+    icon: React.ElementType;
+    label: string;
+    type: string;
+    placeholder: string;
+    showToggle?: boolean;
+    show?: boolean;
+    onToggle?: () => void;
+  }) => {
+    const err = fieldErrors[name];
+    return (
+      <div>
+        <label className="text-[10px] font-semibold text-gray-500 tracking-widest uppercase block mb-1.5">
+          {label}
+        </label>
+        <div className="relative">
+          <Icon size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${err ? 'text-red-400' : 'text-gray-400'}`} />
+          <input
+            type={showToggle ? (show ? 'text' : 'password') : type}
+            value={form[name]}
+            onChange={handleChange(name)}
+            onBlur={handleBlur(name)}
+            placeholder={placeholder}
+            className={`w-full pl-10 ${showToggle ? 'pr-10' : 'pr-4'} py-3 bg-[#F5F6FA] rounded-xl border focus:outline-none text-sm text-gray-700 placeholder-gray-400 transition
+              ${err ? 'border-red-300 bg-red-50' : 'border-transparent focus:border-[#1B2235]'}`}
+          />
+          {showToggle && (
+            <button type="button" onClick={onToggle} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+              {show ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          )}
+        </div>
+        {err && (
+          <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+            <AlertCircle size={11} /> {err}
+          </p>
+        )}
+        {name === 'password' && !err && <PasswordStrength password={form.password} />}
+        {name === 'confirm' && form.confirm && !err && (
+          <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+            <CheckCircle2 size={11} /> Passwords match
+          </p>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className="flex-1 flex flex-col px-6 py-6 overflow-y-auto">
-      {/* Header */}
-      <div className="flex flex-col items-center mb-5 mt-2">
-        <div className="w-14 h-14 rounded-2xl bg-gray-900 flex items-center justify-center mb-3 shadow-lg">
-          <CheckSquare size={28} color="white" />
-        </div>
-        <h1 className="text-xl font-bold text-gray-900">Create Account</h1>
-        <p className="text-xs text-gray-500 mt-1">Join officeTaskTracker today</p>
-      </div>
-
-      {/* Global error banner */}
-      {hasErrors && (
-        <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-300 rounded-xl px-3 py-2.5">
-          <AlertCircle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-[11px] text-red-600 font-medium">
-            Please fix the errors below before continuing.
-          </p>
-        </div>
-      )}
-
-      {/* Form */}
-      <div className="flex flex-col gap-3">
-        {/* Username */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Username
-          </label>
-          <div className={fieldClass("username")}>
-            <User size={14} className={submitted && errors.username ? "text-red-400 flex-shrink-0" : "text-gray-400 flex-shrink-0"} />
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. john_doe"
-              className="flex-1 bg-transparent text-xs text-gray-700 outline-none placeholder-gray-400"
-            />
+    <div className="min-h-screen bg-[#EAECF0] flex items-center justify-center py-6 px-4">
+      <div className="w-full max-w-[430px] bg-white rounded-[36px] shadow-2xl overflow-hidden">
+        {/* Status bar */}
+        <div className="bg-white px-6 pt-4 pb-2 flex items-center justify-between">
+          <span className="text-xs font-semibold text-gray-800">9:41</span>
+          <div className="flex items-center gap-1.5">
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+              <rect x="0" y="3" width="3" height="9" rx="0.5" fill="#1B2235"/>
+              <rect x="4.5" y="2" width="3" height="10" rx="0.5" fill="#1B2235"/>
+              <rect x="9" y="0" width="3" height="12" rx="0.5" fill="#1B2235"/>
+              <rect x="13.5" y="1" width="2.5" height="11" rx="0.5" fill="#D1D5DB"/>
+            </svg>
+            <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+              <rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="#1B2235"/>
+              <rect x="2" y="2" width="16" height="8" rx="1.5" fill="#1B2235"/>
+              <path d="M22 4.5V7.5C22.8 7.2 23.5 6.7 23.5 6C23.5 5.3 22.8 4.8 22 4.5Z" fill="#1B2235"/>
+            </svg>
           </div>
-          {submitted && errors.username && (
-            <p className="text-[10px] text-red-500 flex items-center gap-1">
-              <AlertCircle size={10} /> {errors.username}
-            </p>
-          )}
         </div>
 
-        {/* Email */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Email Address
-          </label>
-          <div className={fieldClass("email")}>
-            <Mail size={14} className={submitted && errors.email ? "text-red-400 flex-shrink-0" : "text-gray-400 flex-shrink-0"} />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. john@example.com"
-              className="flex-1 bg-transparent text-xs text-gray-700 outline-none placeholder-gray-400"
-            />
+        <div className="px-8 pb-10">
+          {/* Logo */}
+          <div className="flex flex-col items-center mt-4 mb-5">
+            <div className="w-14 h-14 bg-[#1B2235] rounded-2xl flex items-center justify-center mb-3 shadow-lg">
+              <CheckSquare size={28} className="text-white" />
+            </div>
+            <h1 className="text-[22px] font-bold text-[#1B2235]">Create Account</h1>
+            <p className="text-sm text-gray-500 mt-1">Join officeTaskTracker today</p>
           </div>
-          {submitted && errors.email && (
-            <p className="text-[10px] text-red-500 flex items-center gap-1">
-              <AlertCircle size={10} /> {errors.email}
-            </p>
-          )}
-        </div>
 
-        {/* Password */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Password
-          </label>
-          <div className={fieldClass("password")}>
-            <Lock size={14} className={submitted && errors.password ? "text-red-400 flex-shrink-0" : "text-gray-400 flex-shrink-0"} />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min. 8 characters"
-              className="flex-1 bg-transparent text-xs text-gray-700 outline-none placeholder-gray-400"
+          {/* Global error */}
+          {globalError && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-3 mb-4 flex items-center gap-2">
+              <AlertCircle size={16} className="text-red-500 shrink-0" />
+              <p className="text-sm text-red-600">{globalError}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <InputField
+              name="username" icon={User} label="Username" type="text" placeholder="e.g. Abhishikth"
             />
-          </div>
-          {submitted && errors.password && (
-            <p className="text-[10px] text-red-500 flex items-center gap-1">
-              <AlertCircle size={10} /> {errors.password}
-            </p>
-          )}
-        </div>
-
-        {/* Confirm Password */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Confirm Password
-          </label>
-          <div className={fieldClass("confirmPassword")}>
-            <Lock size={14} className={submitted && errors.confirmPassword ? "text-red-400 flex-shrink-0" : "text-gray-400 flex-shrink-0"} />
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+            <InputField
+              name="email" icon={Mail} label="Email Address" type="email" placeholder="you@example.com"
+            />
+            <InputField
+              name="password" icon={Lock} label="Password" type="password"
+              placeholder="Min. 6 characters"
+              showToggle show={showPass} onToggle={() => setShowPass(p => !p)}
+            />
+            <InputField
+              name="confirm" icon={Lock} label="Confirm Password" type="password"
               placeholder="Re-enter password"
-              className="flex-1 bg-transparent text-xs text-gray-700 outline-none placeholder-gray-400"
+              showToggle show={showConf} onToggle={() => setShowConf(p => !p)}
             />
-          </div>
-          {submitted && errors.confirmPassword && (
-            <p className="text-[10px] text-red-500 flex items-center gap-1">
-              <AlertCircle size={10} /> {errors.confirmPassword}
-            </p>
-          )}
-        </div>
 
-        {/* Terms checkbox */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <div
-              onClick={() => setAgreed(!agreed)}
-              className={`w-4 h-4 border-2 rounded flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors ${
-                agreed
-                  ? "bg-gray-900 border-gray-900"
-                  : submitted && errors.terms
-                  ? "border-red-400 bg-red-50"
-                  : "border-gray-300 bg-gray-50"
-              }`}
-            >
-              {agreed && (
-                <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-                  <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+            {/* Terms */}
+            <div>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={e => {
+                    setAgreed(e.target.checked);
+                    setFieldErrors(prev => ({ ...prev, terms: '' }));
+                  }}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 accent-[#1B2235]"
+                />
+                <span className="text-xs text-gray-500">
+                  I agree to the{' '}
+                  <button type="button" className="text-[#1B2235] underline">Terms</button>
+                  {' '}&{' '}
+                  <button type="button" className="text-[#1B2235] underline">Privacy Policy</button>
+                </span>
+              </label>
+              {fieldErrors.terms && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle size={11} /> {fieldErrors.terms}
+                </p>
               )}
             </div>
-            <span className="text-xs text-gray-500">
-              I agree to the <span className="underline text-gray-700 cursor-pointer">Terms</span> &{" "}
-              <span className="underline text-gray-700 cursor-pointer">Privacy Policy</span>
-            </span>
-          </div>
-          {submitted && errors.terms && (
-            <p className="text-[10px] text-red-500 flex items-center gap-1 ml-6">
-              <AlertCircle size={10} /> {errors.terms}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-[#1B2235] text-white rounded-xl font-semibold text-sm hover:bg-[#252f47] active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeDasharray="32" strokeDashoffset="8" />
+                  </svg>
+                  Creating account…
+                </>
+              ) : 'Create Account'}
+            </button>
+
+            {/* OR */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 font-medium">OR</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            {/* Google */}
+            <button
+              type="button"
+              className="w-full py-3 border border-dashed border-gray-300 rounded-xl flex items-center justify-center gap-2 text-sm text-gray-500 hover:bg-gray-50 transition"
+            >
+              <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                <span className="text-[10px] font-bold text-gray-500">G</span>
+              </div>
+              Sign up with Google
+            </button>
+
+            {/* Login link */}
+            <p className="text-center text-sm text-gray-500">
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="text-[#1B2235] font-semibold underline"
+              >
+                Log In
+              </button>
             </p>
-          )}
+          </form>
         </div>
-
-        <WireframeButton label="Create Account" variant="primary" onClick={handleSubmit} />
-
-        <SectionDivider label="OR" />
-
-        <div className="border-2 border-dashed border-gray-300 rounded-xl py-3 flex items-center justify-center gap-2 bg-gray-50">
-          <div className="w-4 h-4 rounded-full bg-gray-300" />
-          <span className="text-xs text-gray-400 font-medium">Sign up with Google</span>
-        </div>
-      </div>
-
-      {/* Login Link */}
-      <div className="mt-auto pt-4 flex items-center justify-center gap-1">
-        <span className="text-xs text-gray-500">Already have an account?</span>
-        <button
-          onClick={() => navigate("/login")}
-          className="text-xs font-bold text-gray-900 underline"
-        >
-          Log In
-        </button>
-      </div>
-
-      {/* Annotation */}
-      <div className="mt-3 border border-dashed border-blue-300 rounded-lg p-2 bg-blue-50">
-        <p className="text-[10px] text-blue-500 text-center font-medium">
-          ② Sign Up Screen — Registration Form
-        </p>
       </div>
     </div>
   );

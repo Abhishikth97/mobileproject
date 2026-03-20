@@ -1,7 +1,7 @@
 
-  # Task Manager App Wireframes
+  # Task Management App
 
-  This is a code bundle for Task Manager App Wireframes. The original project is available at https://www.figma.com/design/sK9yftGYXLkJ1zj2VvciYa/Task-Manager-App-Wireframes.
+  This is a code bundle for Task Management App. The original project is available at https://www.figma.com/design/kdWVXioOOmUAQZ0WNKw1aa/Task-Management-App.
 
   ## Running the code
 
